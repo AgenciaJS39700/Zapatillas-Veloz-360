@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VELOZ AIR 360 · Zapatillas que puedes girar</title>
+<meta name="description" content="Gira las zapatillas VELOZ AIR en 360° con el dedo o el ratón. Elige color, talla y pide por WhatsApp.">
+<meta name="theme-color" content="#f1efec">
+<link rel="preload" as="image" href="img/s/00.webp" fetchpriority="high">
+<style>
+:root{
+  --ease:cubic-bezier(.22,1,.36,1);
+  --ink:#121110;--mute:#6b6761;--paper:#f1efec;
+  --accent:#ff6a13;--bg1:#ffe9d9;--bg2:#f1efec;
+  --hue:0deg;--sat:1;
+  --f-d:"Archivo Black","Arial Black","Helvetica Neue",Arial,sans-serif;
+  --f-b:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--f-b);line-height:1.5;overflow-x:hidden}
+img,canvas{display:block;max-width:100%}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:inherit}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+:focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:8px}
+.skip{position:fixed;left:12px;top:-60px;z-index:100;background:#fff;padding:10px 14px;border-radius:8px;transition:top .2s}
+.skip:focus{top:12px}
+
+/* NAV */
+.nav{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;align-items:center;justify-content:space-between;padding:14px 18px;padding-top:calc(14px + env(safe-area-inset-top));background:linear-gradient(to bottom,rgba(241,239,236,.92),rgba(241,239,236,0))}
+.logo{font-family:var(--f-d);font-size:1.35rem;letter-spacing:-.02em;text-decoration:none;font-style:italic}
+.logo b{color:var(--accent);transition:color .5s}
+.nav ul{display:none;gap:30px;list-style:none;margin:0;padding:0}
+.nav ul a{text-decoration:none;font-size:.9rem;font-weight:500;opacity:.75}
+.nav ul a:hover{opacity:1}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:14px 26px;border-radius:999px;background:var(--ink);color:#fff;font-weight:700;text-decoration:none;border:0;transition:transform .3s var(--ease),background .4s,box-shadow .3s}
+.btn:hover{transform:translateY(-2px);background:var(--accent)}
+.btn--sm{padding:9px 18px;font-size:.88rem}
+
+/* HERO */
+.hero{position:relative;min-height:100svh;padding:84px 18px 40px;display:grid;gap:8px;align-content:center;isolation:isolate;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;z-index:-3;background:radial-gradient(70% 55% at 50% 38%,var(--bg1),var(--bg2) 72%);transition:background .6s}
+.word{position:absolute;z-index:-2;left:50%;top:26%;margin:0;transform:translate(-50%,-50%);font-family:var(--f-d);font-style:italic;text-transform:uppercase;white-space:nowrap;font-size:clamp(6rem,36vw,24rem);line-height:.8;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--accent) 26%,transparent);pointer-events:none;user-select:none;transition:-webkit-text-stroke-color .6s}
+.stage{position:relative;width:min(100%,560px);margin-inline:auto}
+.viewer{position:relative;aspect-ratio:1;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+.viewer:active{cursor:grabbing}
+.viewer canvas{width:100%;height:100%;mix-blend-mode:multiply;filter:hue-rotate(var(--hue)) saturate(var(--sat));transition:filter .5s}
+.loader{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--f-d);font-size:.9rem;letter-spacing:.1em;color:var(--mute);transition:opacity .4s}
+.loader.done{opacity:0;pointer-events:none}
+.badge{position:absolute;left:0;top:6%;z-index:2;display:inline-flex;align-items:center;gap:8px;padding:8px 14px 8px 10px;border-radius:999px;background:#fff;box-shadow:0 8px 24px -10px rgba(0,0,0,.35);font-size:.82rem;font-weight:600;max-width:78%;transition:opacity .35s,transform .5s var(--ease)}
+.badge.swap{opacity:0;transform:translateY(6px)}
+.badge i{flex:none;width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 0 var(--accent);animation:ping 1.8s ease-out infinite;transition:background .5s}
+@keyframes ping{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 60%,transparent)}100%{box-shadow:0 0 0 12px transparent}}
+.hint{position:absolute;right:0;bottom:4%;z-index:2;display:inline-flex;align-items:center;gap:8px;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);transition:opacity .5s}
+.hint svg{animation:sway 1.8s ease-in-out infinite}
+@keyframes sway{0%,100%{transform:translateX(-4px)}50%{transform:translateX(6px)}}
+.hint.gone{opacity:0}
+.spin{display:flex;align-items:center;gap:14px;margin:6px auto 0;width:min(100%,460px)}
+.spin output{min-width:3.4ch;text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.spin input{flex:1;appearance:none;-webkit-appearance:none;height:6px;border-radius:99px;background:color-mix(in srgb,var(--ink) 14%,transparent);outline-offset:6px}
+.spin input::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--ink);border:4px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.35);cursor:grab}
+.spin input::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--ink);border:4px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.35);cursor:grab}
+
+/* BUY PANEL */
+.panel{max-width:560px;width:100%;margin:10px auto 0}
+.eyebrow{font-size:.74rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);font-weight:700;transition:color .5s}
+h1{font-family:var(--f-d);font-style:italic;text-transform:uppercase;font-size:clamp(2.2rem,9vw,4.2rem);line-height:.92;letter-spacing:-.03em;margin:6px 0 10px}
+.price{display:flex;align-items:baseline;gap:12px;margin-bottom:16px}
+.price b{font-family:var(--f-d);font-size:1.9rem}
+.price s{color:var(--mute)}
+.lbl{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin:14px 0 8px;display:flex;justify-content:space-between}
+.lbl span{color:var(--ink);font-weight:700;letter-spacing:.04em;text-transform:none;font-size:.9rem}
+.sw{display:flex;gap:12px;flex-wrap:wrap}
+.sw button{width:46px;height:46px;border-radius:50%;border:2px solid transparent;padding:4px;background:transparent;transition:transform .3s var(--ease),border-color .3s}
+.sw button i{display:block;width:100%;height:100%;border-radius:50%;background:var(--c);box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.sw button[aria-pressed="true"]{border-color:var(--ink);transform:scale(1.1)}
+.sizes{display:flex;gap:8px;flex-wrap:wrap}
+.sizes button{min-width:50px;padding:11px 0;border-radius:12px;border:1.5px solid color-mix(in srgb,var(--ink) 18%,transparent);background:#fff;font-weight:600;transition:all .25s}
+.sizes button:hover{border-color:var(--ink)}
+.sizes button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.cta{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:20px}
+.cta .btn{flex:1 1 220px;padding:17px 26px;font-size:1rem}
+.note{font-size:.8rem;color:var(--mute);margin:10px 0 0}
+
+/* SECTIONS */
+section.block{max-width:1180px;margin:0 auto;padding:90px 18px}
+h2{font-family:var(--f-d);font-style:italic;text-transform:uppercase;font-size:clamp(1.9rem,6.5vw,3.6rem);line-height:.95;letter-spacing:-.03em;margin:8px 0 34px;max-width:16ch}
+.feat{display:grid;gap:14px;grid-template-columns:1fr}
+.fcard{display:flex;flex-direction:column;gap:6px;text-align:left;padding:22px;border-radius:22px;background:#fff;border:1.5px solid transparent;box-shadow:0 18px 40px -28px rgba(0,0,0,.4);transition:transform .4s var(--ease),border-color .3s}
+.fcard:hover{transform:translateY(-4px);border-color:var(--accent)}
+.fcard b{font-family:var(--f-d);font-style:italic;text-transform:uppercase;font-size:1.15rem}
+.fcard span{color:var(--mute);font-size:.94rem}
+.fcard em{font-style:normal;font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-top:auto;padding-top:10px}
+.cols{display:grid;gap:14px;grid-template-columns:repeat(2,1fr)}
+.col{position:relative;border-radius:24px;overflow:hidden;padding:0 0 16px;text-align:left;background:var(--b);border:0;transition:transform .5s var(--ease)}
+.col:hover{transform:translateY(-6px)}
+.col .pi{display:block;width:100%;aspect-ratio:1;overflow:hidden}
+.col img{width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;filter:hue-rotate(var(--h)) saturate(var(--s,1));transform:scale(1.08);transition:transform .7s var(--ease)}
+.col:hover img{transform:scale(1.16) rotate(-3deg)}
+.col b{display:block;padding:0 16px;font-family:var(--f-d);font-style:italic;text-transform:uppercase;font-size:1rem}
+.col span{display:block;padding:0 16px;color:var(--mute);font-size:.86rem}
+.strip{margin:20px 18px 0;border-radius:34px;padding:60px 24px;text-align:center;background:var(--ink);color:#fff}
+.strip h2{margin:0 auto 14px;max-width:14ch;color:#fff}
+.strip p{margin:0 auto 26px;max-width:46ch;opacity:.8}
+.strip .btn{background:var(--accent)}
+.strip .btn:hover{background:#fff;color:var(--ink)}
+footer{padding:46px 18px calc(46px + env(safe-area-inset-bottom));text-align:center;color:var(--mute);font-size:.85rem}
+
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .9s var(--ease),transform .9s var(--ease);transition-delay:var(--dl,0s)}
+.reveal.in{opacity:1;transform:none}
+
+@media (min-width:760px){
+  .nav{padding:18px 40px}
+  .nav ul{display:flex}
+  .feat{grid-template-columns:repeat(2,1fr)}
+  .cols{grid-template-columns:repeat(4,1fr)}
+}
+@media (min-width:980px){
+  .hero{grid-template-columns:1.1fr 1fr;align-items:center;gap:32px;padding:96px 56px 56px;max-width:1500px;margin:0 auto}
+  .hero::before{inset:0 calc(50% - 50vw)}
+  .word{top:46%;left:30%}
+  .stage{grid-column:1;grid-row:1;width:100%;max-width:720px;margin:0}
+  .spin{grid-column:1;grid-row:2;margin:0 auto 0 0}
+  .panel{grid-column:2;grid-row:1/3;margin:0;max-width:480px}
+  .feat{grid-template-columns:repeat(4,1fr)}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important}
+  html{scroll-behavior:auto}.reveal{opacity:1;transform:none}
+}
+</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"Product","name":"VELOZ AIR 360","description":"Zapatilla running con cámara de aire visible, malla transpirable y talón reforzado.","brand":{"@type":"Brand","name":"VELOZ"},"offers":{"@type":"Offer","priceCurrency":"EUR","price":"129","availability":"https://schema.org/InStock"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#comprar">Saltar al producto</a>
+
+<header class="nav">
+  <a class="logo" href="#inicio" aria-label="VELOZ, inicio">VELOZ<b>.</b></a>
+  <nav aria-label="Principal"><ul>
+    <li><a href="#detalles">Detalles</a></li><li><a href="#colores">Colores</a></li><li><a href="#pedido">Pedidos</a></li>
+  </ul></nav>
+  <a class="btn btn--sm" href="#comprar">Comprar</a>
+</header>
+
+<main id="inicio">
+  <section class="hero" aria-label="Producto en 360 grados">
+    <p class="word" aria-hidden="true">Air</p>
+
+    <div class="stage">
+      <div class="viewer" id="viewer" role="img" aria-label="Zapatilla VELOZ AIR 360. Arrastra hacia los lados para girarla.">
+        <canvas id="cv" width="720" height="720"></canvas>
+        <div class="loader" id="loader" aria-live="polite">Cargando 0%</div>
+        <div class="badge" id="badge" aria-live="polite"><i></i><span id="badgeTxt">Cámara de aire visible</span></div>
+        <div class="hint" id="hint" aria-hidden="true">
+          <svg width="34" height="18" viewBox="0 0 34 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9h30M8 3L2 9l6 6M26 3l6 6-6 6"/></svg>
+          Arrastra para girar
+        </div>
+      </div>
+    </div>
+
+    <div class="spin">
+      <label class="sr" for="rot">Girar la zapatilla</label>
+      <input id="rot" type="range" min="0" max="359" step="1" value="0">
+      <output id="deg" for="rot">0°</output>
+    </div>
+
+    <div class="panel" id="comprar">
+      <span class="eyebrow">Nueva colección · Running</span>
+      <h1>Air 360</h1>
+      <div class="price"><b>129 €</b><s>159 €</s></div>
+
+      <div class="lbl">Color <span id="cname">Naranja Volt</span></div>
+      <div class="sw" id="sw" role="group" aria-label="Elegir color">
+        <button type="button" data-i="0" style="--c:#ff6a13" aria-label="Naranja Volt" aria-pressed="true"><i></i></button>
+        <button type="button" data-i="1" style="--c:#1f6bff" aria-label="Azul Eléctrico" aria-pressed="false"><i></i></button>
+        <button type="button" data-i="2" style="--c:#9ad600" aria-label="Verde Lima" aria-pressed="false"><i></i></button>
+        <button type="button" data-i="3" style="--c:#ff2d8a" aria-label="Rosa Neón" aria-pressed="false"><i></i></button>
+      </div>
+
+      <div class="lbl">Talla <span id="sname">42</span></div>
+      <div class="sizes" id="sizes" role="group" aria-label="Elegir talla"></div>
+
+      <div class="cta">
+        <a class="btn" id="buy" href="#" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+      </div>
+      <p class="note">Envío en 24–48 h · Cambios gratis 30 días</p>
+    </div>
+  </section>
+
+  <section class="block" id="detalles">
+    <span class="eyebrow reveal">Mira cada detalle</span>
+    <h2 class="reveal" style="--dl:.08s">Cada ángulo cuenta</h2>
+    <div class="feat">
+      <button class="fcard reveal" type="button" data-a="0"><b>Cámara de aire</b><span>Ventana visible en la suela para amortiguar cada pisada.</span><em>Ver en 3D →</em></button>
+      <button class="fcard reveal" type="button" data-a="120" style="--dl:.08s"><b>Talón reforzado</b><span>Contrafuerte rígido y panel de color que sujeta el pie.</span><em>Ver en 3D →</em></button>
+      <button class="fcard reveal" type="button" data-a="180" style="--dl:.16s"><b>Malla transpirable</b><span>Tejido ligero con paneles de piel sintética resistentes.</span><em>Ver en 3D →</em></button>
+      <button class="fcard reveal" type="button" data-a="285" style="--dl:.24s"><b>Puntera ventilada</b><span>Más espacio para los dedos y una zona de flexión suave.</span><em>Ver en 3D →</em></button>
+    </div>
+  </section>
+
+  <section class="block" id="colores">
+    <span class="eyebrow reveal">Colecciones</span>
+    <h2 class="reveal" style="--dl:.08s">Elige tu color</h2>
+    <div class="cols" id="cols"></div>
+  </section>
+
+  <section class="strip reveal" id="pedido">
+    <h2>Pruébalas sin riesgo</h2>
+    <p>Pídelas por WhatsApp y te respondemos en minutos. Si no te quedan perfectas, las cambias gratis durante 30 días.</p>
+    <a class="btn" id="buy2" href="#" target="_blank" rel="noopener">Pedir por WhatsApp</a>
+  </section>
+</main>
+
+<footer>© 2026 VELOZ · Maqueta de ejemplo de visor 360° · Marca ficticia</footer>
+
+<script>
+(()=>{
+  const N=72,STEP=360/N;
+  const colors=[
+    {n:"Naranja Volt",a:"#ff6a13",h:0,s:1,b1:"#ffe6d3"},
+    {n:"Azul Eléctrico",a:"#1f6bff",h:188,s:1.05,b1:"#dbe6ff"},
+    {n:"Verde Lima",a:"#7fb800",h:76,s:1.15,b1:"#e6f3c4"},
+    {n:"Rosa Neón",a:"#ff2d8a",h:300,s:1.05,b1:"#ffd9ea"}
+  ];
+  // leyendas según el ángulo (0° = perfil izquierdo)
+  const caps=[
+    [0,28,"Cámara de aire visible"],[28,95,"Panel en contraste y cordones planos"],
+    [95,150,"Talón reforzado"],[150,205,"Malla transpirable y suela de gran agarre"],
+    [205,262,"Costuras selladas"],[262,332,"Puntera ventilada y flexible"],[332,360,"Cámara de aire visible"]
+  ];
+  const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+  const root=document.documentElement,cv=$("#cv"),ctx=cv.getContext("2d");
+  const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  const rot=$("#rot"),deg=$("#deg"),badge=$("#badge"),badgeTxt=$("#badgeTxt"),hint=$("#hint"),loader=$("#loader");
+  let angle=0,vel=0,dragging=false,lastX=0,lastT=0,idleAt=performance.now(),capI=0,cur=0,size=42,target=null;
+
+  // ---- carga progresiva de los 72 fotogramas ----
+  const imgs=new Array(N),ready=new Array(N).fill(false);let loaded=0;
+  function load(i){return new Promise(res=>{
+    const im=new Image();im.decoding="async";
+    im.onload=()=>{imgs[i]=im;ready[i]=true;loaded++;loader.textContent="Cargando "+Math.round(loaded/N*100)+"%";if(loaded>=N||i===0&&loaded===1)draw();res()};
+    im.onerror=res;im.src="img/s/"+String(i).padStart(2,"0")+".webp";
+  })}
+  (async()=>{
+    await load(0);
+    const coarse=[];for(let i=6;i<N;i+=6)coarse.push(i);
+    const order=coarse.concat(Array.from({length:N},(_,i)=>i).filter(i=>i&&i%6));
+    const q=order.slice();const workers=Array.from({length:4},async()=>{while(q.length)await load(q.shift())});
+    await Promise.all(workers);loader.classList.add("done");
+  })();
+  setTimeout(()=>{if(loaded>=6)loader.classList.add("done")},2500);
+
+  function nearest(i){for(let d=0;d<N;d++){const a=(i+d)%N,b=(i-d+N*2)%N;if(ready[a])return a;if(ready[b])return b}return 0}
+  function draw(){
+    const f=((angle%360)+360)%360/STEP,i0=Math.floor(f)%N,i1=(i0+1)%N,t=f-Math.floor(f);
+    const a=imgs[nearest(i0)],b=imgs[nearest(i1)];if(!a)return;
+    ctx.globalAlpha=1;ctx.clearRect(0,0,cv.width,cv.height);ctx.drawImage(a,0,0,cv.width,cv.height);
+    if(b&&b!==a&&t>.02){ctx.globalAlpha=t;ctx.drawImage(b,0,0,cv.width,cv.height)}
+    ctx.globalAlpha=1;
+  }
+  function ui(){
+    const a=Math.round(((angle%360)+360)%360);rot.value=a%360;deg.textContent=a%360+"°";
+    const idx=caps.findIndex(c=>a>=c[0]&&a<c[1]);
+    if(idx>-1&&idx!==capI){capI=idx;badge.classList.add("swap");setTimeout(()=>{badgeTxt.textContent=caps[idx][2];badge.classList.remove("swap")},170)}
+  }
+
+  // ---- bucle: inercia, autogiro y animación a un ángulo ----
+  function tick(now){
+    if(target!==null){
+      let d=((target-angle+540)%360)-180;angle+=d*.12;if(Math.abs(d)<.4){angle=target;target=null}
+    }else if(!dragging){
+      if(Math.abs(vel)>.02){angle+=vel;vel*=.94}
+      else if(!reduce&&now-idleAt>2800){angle+=.28}
+    }
+    draw();ui();requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // ---- arrastre (ratón y dedo) ----
+  const vw=$("#viewer");
+  vw.addEventListener("pointerdown",e=>{dragging=true;target=null;lastX=e.clientX;lastT=e.timeStamp;vel=0;vw.setPointerCapture(e.pointerId);hint.classList.add("gone")});
+  vw.addEventListener("pointermove",e=>{
+    if(!dragging)return;const dx=e.clientX-lastX,dt=Math.max(1,e.timeStamp-lastT);
+    const k=360/(vw.clientWidth*1.15);angle-=dx*k;vel=-(dx*k)/dt*16*.9;lastX=e.clientX;lastT=e.timeStamp;idleAt=performance.now();
+  });
+  const end=()=>{dragging=false;idleAt=performance.now()};
+  vw.addEventListener("pointerup",end);vw.addEventListener("pointercancel",end);
+  rot.addEventListener("input",()=>{target=null;vel=0;angle=+rot.value;idleAt=performance.now();hint.classList.add("gone")});
+  function spinTo(a){target=a;vel=0;idleAt=performance.now()}
+
+  // ---- color, talla, pedido ----
+  const sizes=$("#sizes");
+  [38,39,40,41,42,43,44,45,46].forEach(s=>{
+    const b=document.createElement("button");b.type="button";b.textContent=s;b.setAttribute("aria-pressed",s===size);
+    b.onclick=()=>{size=s;$$("#sizes button").forEach(x=>x.setAttribute("aria-pressed",+x.textContent===s));$("#sname").textContent=s;wa()};sizes.appendChild(b)
+  });
+  function wa(){
+    const t=encodeURIComponent(`Hola, quiero las VELOZ AIR 360 en ${colors[cur].n}, talla ${size}`);
+    const u="https://wa.me/34600000000?text="+t;$("#buy").href=u;$("#buy2").href=u;
+  }
+  function setColor(i){
+    cur=i;const c=colors[i];
+    root.style.setProperty("--hue",c.h+"deg");root.style.setProperty("--sat",c.s);
+    root.style.setProperty("--accent",c.a);root.style.setProperty("--bg1",c.b1);
+    $("#cname").textContent=c.n;
+    $$("#sw button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.i===i));
+    wa();
+  }
+  $$("#sw button").forEach(b=>b.onclick=()=>setColor(+b.dataset.i));
+
+  // tarjetas de detalle: giran la zapatilla hasta ese ángulo
+  $$(".fcard").forEach(c=>c.onclick=()=>{
+    $("#inicio").scrollIntoView({behavior:reduce?"auto":"smooth"});
+    setTimeout(()=>spinTo(+c.dataset.a),reduce?0:450);
+  });
+
+  // colecciones
+  const cols=$("#cols");
+  colors.forEach((c,i)=>{
+    const b=document.createElement("button");b.type="button";b.className="col reveal";b.style.cssText=`--h:${c.h}deg;--s:${c.s};--b:${c.b1};--dl:${i*.08}s`;
+    b.innerHTML=`<span class="pi"><img src="img/s/00.webp" alt="" loading="lazy" width="360" height="360"></span><b>${c.n}</b><span>129 €</span>`;
+    b.setAttribute("aria-label","Elegir color "+c.n);
+    b.onclick=()=>{setColor(i);$("#inicio").scrollIntoView({behavior:reduce?"auto":"smooth"})};cols.appendChild(b)
+  });
+
+  const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.15});
+  $$(".reveal").forEach(el=>io.observe(el));
+  wa();
+})();
+</script>
+</body>
+</html>
