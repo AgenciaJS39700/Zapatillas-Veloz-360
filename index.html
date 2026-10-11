@@ -153,7 +153,7 @@ footer{padding:46px 18px calc(46px + env(safe-area-inset-bottom));text-align:cen
   <section class="hero" aria-label="Producto en 360 grados">
     <div class="stage">
       <div class="viewer" id="viewer" role="img" aria-label="Zapatilla VELOZ AIR 360. Arrastra hacia los lados para girarla.">
-        <canvas id="cv" width="720" height="720"></canvas>
+        <canvas id="cv" width="800" height="800"></canvas>
         <div class="loader" id="loader" aria-live="polite">Cargando 0%</div>
         <div class="badge" id="badge" aria-live="polite"><i></i><span id="badgeTxt">Cámara de aire visible</span></div>
         <div class="hint" id="hint" aria-hidden="true">
@@ -267,7 +267,7 @@ footer{padding:46px 18px calc(46px + env(safe-area-inset-bottom));text-align:cen
 
   function nearest(R,i){const N=R.n;for(let d=0;d<N;d++){const a=(i+d)%N,b=(i-d+N*2)%N;if(R.ready[a])return R.imgs[a];if(R.ready[b])return R.imgs[b]}return null}
   function frame(R,ang,alpha){
-    const N=R.n,f=((ang%360)+360)%360/(360/N),i0=Math.floor(f)%N,i1=(i0+1)%N,t=f-Math.floor(f);
+    const N=R.n,f=((ang%360)+360)%360/(360/N),i0=Math.round(f)%N,i1=i0,t=0;
     const a=nearest(R,i0),b=nearest(R,i1);if(!a)return false;
     ctx.globalAlpha=alpha;ctx.drawImage(a,0,0,cv.width,cv.height);
     if(b&&b!==a&&t>.02){ctx.globalAlpha=alpha*t;ctx.drawImage(b,0,0,cv.width,cv.height)}
