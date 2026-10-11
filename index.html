@@ -6,7 +6,7 @@
 <title>VELOZ AIR 360 · Zapatillas que puedes girar</title>
 <meta name="description" content="Gira las zapatillas VELOZ AIR en 360° con el dedo o el ratón. Elige color, talla y pide por WhatsApp.">
 <meta name="theme-color" content="#f1efec">
-<link rel="preload" as="image" href="img/s/00.webp" fetchpriority="high">
+<link rel="preload" as="image" href="img/s/000.webp" fetchpriority="high">
 <style>
 :root{
   --ease:cubic-bezier(.22,1,.36,1);
@@ -41,7 +41,6 @@ a{color:inherit}
 /* HERO */
 .hero{position:relative;min-height:100svh;padding:84px 18px 40px;display:grid;gap:8px;align-content:center;isolation:isolate;overflow:hidden}
 .hero::before{content:"";position:absolute;inset:0;z-index:-3;background:radial-gradient(70% 55% at 50% 38%,var(--bg1),var(--bg2) 72%);transition:background .6s}
-.word{position:absolute;z-index:-2;left:50%;top:26%;margin:0;transform:translate(-50%,-50%);font-family:var(--f-d);font-style:italic;text-transform:uppercase;white-space:nowrap;font-size:clamp(6rem,36vw,24rem);line-height:.8;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--accent) 26%,transparent);pointer-events:none;user-select:none;transition:-webkit-text-stroke-color .6s}
 .stage{position:relative;width:min(100%,560px);margin-inline:auto}
 .viewer{position:relative;aspect-ratio:1;touch-action:pan-y;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
 .viewer:active{cursor:grabbing}
@@ -125,7 +124,6 @@ footer{padding:46px 18px calc(46px + env(safe-area-inset-bottom));text-align:cen
 @media (min-width:980px){
   .hero{grid-template-columns:1.1fr 1fr;align-items:center;gap:32px;padding:96px 56px 56px;max-width:1500px;margin:0 auto}
   .hero::before{inset:0 calc(50% - 50vw)}
-  .word{top:46%;left:30%}
   .stage{grid-column:1;grid-row:1;width:100%;max-width:720px;margin:0}
   .ctrl{grid-column:1;grid-row:2;margin:0 auto 0 0}
   .panel{grid-column:2;grid-row:1/3;margin:0;max-width:480px}
@@ -153,8 +151,6 @@ footer{padding:46px 18px calc(46px + env(safe-area-inset-bottom));text-align:cen
 
 <main id="inicio">
   <section class="hero" aria-label="Producto en 360 grados">
-    <p class="word" aria-hidden="true">Air</p>
-
     <div class="stage">
       <div class="viewer" id="viewer" role="img" aria-label="Zapatilla VELOZ AIR 360. Arrastra hacia los lados para girarla.">
         <canvas id="cv" width="720" height="720"></canvas>
@@ -231,7 +227,7 @@ footer{padding:46px 18px calc(46px + env(safe-area-inset-bottom));text-align:cen
 
 <script>
 (()=>{
-  const N=72,STEP=360/N;
+  
   const colors=[
     {n:"Naranja Volt",a:"#ff6a13",h:0,s:1,b1:"#ffe6d3"},
     {n:"Azul Eléctrico",a:"#1f6bff",h:188,s:1.05,b1:"#dbe6ff"},
@@ -240,9 +236,9 @@ footer{padding:46px 18px calc(46px + env(safe-area-inset-bottom));text-align:cen
   ];
   // 3 vistas: lateral (vuelta completa), desde arriba y suela (recorren el vídeo de ida y vuelta)
   const rings=[
-    {dir:"s",home:0,caps:[[0,28,"Cámara de aire visible"],[28,95,"Panel en contraste y cordones planos"],[95,150,"Talón reforzado"],[150,205,"Malla transpirable y suela de gran agarre"],[205,262,"Costuras selladas"],[262,332,"Puntera ventilada y flexible"],[332,361,"Cámara de aire visible"]]},
-    {dir:"t",home:50,caps:[[0,60,"Vista desde arriba"],[60,130,"Cordones planos y lengüeta acolchada"],[130,240,"Talón reforzado y colchón de aire"],[240,300,"Malla transpirable"],[300,361,"Vista desde arriba"]]},
-    {dir:"b",home:0,caps:[[0,170,"Suela con tacos de tracción"],[170,235,"Laterales de la suela"],[235,361,"Cámara de aire visible"]]}
+    {dir:"s",n:120,pad:3,home:0,caps:[[0,28,"Cámara de aire visible"],[28,95,"Panel en contraste y cordones planos"],[95,150,"Talón reforzado"],[150,205,"Malla transpirable y suela de gran agarre"],[205,262,"Costuras selladas"],[262,332,"Puntera ventilada y flexible"],[332,361,"Cámara de aire visible"]]},
+    {dir:"t",n:72,pad:2,home:50,caps:[[0,60,"Vista desde arriba"],[60,130,"Cordones planos y lengüeta acolchada"],[130,240,"Talón reforzado y colchón de aire"],[240,300,"Malla transpirable"],[300,361,"Vista desde arriba"]]},
+    {dir:"b",n:72,pad:2,home:0,caps:[[0,170,"Suela con tacos de tracción"],[170,235,"Laterales de la suela"],[235,361,"Cámara de aire visible"]]}
   ];
   const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
   const root=document.documentElement,cv=$("#cv"),ctx=cv.getContext("2d");
@@ -252,17 +248,16 @@ footer{padding:46px 18px calc(46px + env(safe-area-inset-bottom));text-align:cen
   let ring=0,prev=null,fade=0,angle=0,vel=0,dragging=false,lastX=0,lastT=0,idleAt=performance.now(),capI=-1,cur=0,size=42,target=null;
 
   // ---- carga progresiva de fotogramas por vista ----
-  rings.forEach(r=>{r.imgs=new Array(N);r.ready=new Array(N).fill(false);r.loaded=0;r.started=false});
-  const pad=i=>String(i).padStart(2,"0");
-  function load(r,i){return new Promise(res=>{
+  rings.forEach(r=>{r.imgs=new Array(r.n);r.ready=new Array(r.n).fill(false);r.loaded=0;r.started=false});
+    function load(r,i){return new Promise(res=>{
     const R=rings[r],im=new Image();im.decoding="async";
-    im.onload=()=>{R.imgs[i]=im;R.ready[i]=true;R.loaded++;dirty=true;if(r===0)loader.textContent="Cargando "+Math.round(R.loaded/N*100)+"%";res()};
-    im.onerror=res;im.src="img/"+R.dir+"/"+pad(i)+".webp";
+    im.onload=()=>{R.imgs[i]=im;R.ready[i]=true;R.loaded++;dirty=true;if(r===0)loader.textContent="Cargando "+Math.round(R.loaded/R.n*100)+"%";res()};
+    im.onerror=res;im.src="img/"+R.dir+"/"+String(i).padStart(R.pad,"0")+".webp";
   })}
   async function loadRing(r){
     const R=rings[r];if(R.started)return;R.started=true;
     await load(r,0);
-    const coarse=[];for(let i=6;i<N;i+=6)coarse.push(i);
+    const N=R.n,coarse=[];for(let i=6;i<N;i+=6)coarse.push(i);
     const q=coarse.concat(Array.from({length:N},(_,i)=>i).filter(i=>i&&i%6));
     await Promise.all(Array.from({length:4},async()=>{while(q.length)await load(r,q.shift())}));
     if(r===0)loader.classList.add("done");
@@ -270,9 +265,9 @@ footer{padding:46px 18px calc(46px + env(safe-area-inset-bottom));text-align:cen
   (async()=>{await loadRing(0);loadRing(1).then(()=>loadRing(2))})();
   setTimeout(()=>{if(rings[0].loaded>=6)loader.classList.add("done")},2500);
 
-  function nearest(R,i){for(let d=0;d<N;d++){const a=(i+d)%N,b=(i-d+N*2)%N;if(R.ready[a])return R.imgs[a];if(R.ready[b])return R.imgs[b]}return null}
+  function nearest(R,i){const N=R.n;for(let d=0;d<N;d++){const a=(i+d)%N,b=(i-d+N*2)%N;if(R.ready[a])return R.imgs[a];if(R.ready[b])return R.imgs[b]}return null}
   function frame(R,ang,alpha){
-    const f=((ang%360)+360)%360/STEP,i0=Math.floor(f)%N,i1=(i0+1)%N,t=f-Math.floor(f);
+    const N=R.n,f=((ang%360)+360)%360/(360/N),i0=Math.floor(f)%N,i1=(i0+1)%N,t=f-Math.floor(f);
     const a=nearest(R,i0),b=nearest(R,i1);if(!a)return false;
     ctx.globalAlpha=alpha;ctx.drawImage(a,0,0,cv.width,cv.height);
     if(b&&b!==a&&t>.02){ctx.globalAlpha=alpha*t;ctx.drawImage(b,0,0,cv.width,cv.height)}
@@ -310,7 +305,7 @@ footer{padding:46px 18px calc(46px + env(safe-area-inset-bottom));text-align:cen
       const d=((target-angle+540)%360)-180;angle+=d*Math.min(1,.12*dt);if(Math.abs(d)<.4){angle=target;target=null}
     }else if(!dragging){
       if(Math.abs(vel)>.02){angle+=vel*dt;vel*=Math.pow(.95,dt)}
-      else if(!reduce&&now-idleAt>2000){angle+=.9*dt}
+      else if(!reduce&&now-idleAt>2000&&rings[ring].loaded>=rings[ring].n*.92){angle+=.9*dt}
     }
     const key=ring+"|"+Math.round(angle*4)+"|"+fade.toFixed(2);
     if(dirty||key!==lastKey){lastKey=key;dirty=false;draw();ui()}
@@ -363,7 +358,7 @@ footer{padding:46px 18px calc(46px + env(safe-area-inset-bottom));text-align:cen
   const cols=$("#cols");
   colors.forEach((c,i)=>{
     const b=document.createElement("button");b.type="button";b.className="col reveal";b.style.cssText=`--h:${c.h}deg;--s:${c.s};--b:${c.b1};--dl:${i*.08}s`;
-    b.innerHTML=`<span class="pi"><img src="img/s/00.webp" alt="" loading="lazy" width="360" height="360"></span><b>${c.n}</b><span>129 €</span>`;
+    b.innerHTML=`<span class="pi"><img src="img/s/000.webp" alt="" loading="lazy" width="360" height="360"></span><b>${c.n}</b><span>129 €</span>`;
     b.setAttribute("aria-label","Elegir color "+c.n);
     b.onclick=()=>{setColor(i);$("#inicio").scrollIntoView({behavior:reduce?"auto":"smooth"})};cols.appendChild(b)
   });
