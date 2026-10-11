@@ -56,7 +56,12 @@ a{color:inherit}
 .hint svg{animation:sway 1.8s ease-in-out infinite}
 @keyframes sway{0%,100%{transform:translateX(-4px)}50%{transform:translateX(6px)}}
 .hint.gone{opacity:0}
-.spin{display:flex;align-items:center;gap:14px;margin:6px auto 0;width:min(100%,460px)}
+.ctrl{display:grid;gap:10px;margin:6px auto 0;width:min(100%,460px)}
+.views{display:flex;gap:6px;padding:5px;border-radius:999px;background:rgba(255,255,255,.7);backdrop-filter:blur(6px);box-shadow:0 8px 24px -14px rgba(0,0,0,.4)}
+.views button{flex:1;padding:9px 6px;border:0;border-radius:999px;background:transparent;font-size:.8rem;font-weight:600;white-space:nowrap;transition:background .3s,color .3s}
+.views button:hover{background:rgba(0,0,0,.06)}
+.views button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.spin{display:flex;align-items:center;gap:14px;width:100%}
 .spin output{min-width:3.4ch;text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
 .spin input{flex:1;appearance:none;-webkit-appearance:none;height:6px;border-radius:99px;background:color-mix(in srgb,var(--ink) 14%,transparent);outline-offset:6px}
 .spin input::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--ink);border:4px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.35);cursor:grab}
@@ -121,7 +126,7 @@ footer{padding:46px 18px calc(46px + env(safe-area-inset-bottom));text-align:cen
   .hero::before{inset:0 calc(50% - 50vw)}
   .word{top:46%;left:30%}
   .stage{grid-column:1;grid-row:1;width:100%;max-width:720px;margin:0}
-  .spin{grid-column:1;grid-row:2;margin:0 auto 0 0}
+  .ctrl{grid-column:1;grid-row:2;margin:0 auto 0 0}
   .panel{grid-column:2;grid-row:1/3;margin:0;max-width:480px}
   .feat{grid-template-columns:repeat(4,1fr)}
 }
@@ -161,10 +166,17 @@ footer{padding:46px 18px calc(46px + env(safe-area-inset-bottom));text-align:cen
       </div>
     </div>
 
-    <div class="spin">
-      <label class="sr" for="rot">Girar la zapatilla</label>
-      <input id="rot" type="range" min="0" max="359" step="1" value="0">
-      <output id="deg" for="rot">0°</output>
+    <div class="ctrl">
+      <div class="views" id="views" role="group" aria-label="Elegir vista">
+        <button type="button" data-r="1" aria-pressed="false">Desde arriba</button>
+        <button type="button" data-r="0" aria-pressed="true">Lateral 360°</button>
+        <button type="button" data-r="2" aria-pressed="false">Suela</button>
+      </div>
+      <div class="spin">
+        <label class="sr" for="rot">Girar la zapatilla</label>
+        <input id="rot" type="range" min="0" max="359" step="1" value="0">
+        <output id="deg" for="rot">0°</output>
+      </div>
     </div>
 
     <div class="panel" id="comprar">
@@ -225,52 +237,74 @@ footer{padding:46px 18px calc(46px + env(safe-area-inset-bottom));text-align:cen
     {n:"Verde Lima",a:"#7fb800",h:76,s:1.15,b1:"#e6f3c4"},
     {n:"Rosa Neón",a:"#ff2d8a",h:300,s:1.05,b1:"#ffd9ea"}
   ];
-  // leyendas según el ángulo (0° = perfil izquierdo)
-  const caps=[
-    [0,28,"Cámara de aire visible"],[28,95,"Panel en contraste y cordones planos"],
-    [95,150,"Talón reforzado"],[150,205,"Malla transpirable y suela de gran agarre"],
-    [205,262,"Costuras selladas"],[262,332,"Puntera ventilada y flexible"],[332,360,"Cámara de aire visible"]
+  // 3 vistas: lateral (vuelta completa), desde arriba y suela (recorren el vídeo de ida y vuelta)
+  const rings=[
+    {dir:"s",home:0,caps:[[0,28,"Cámara de aire visible"],[28,95,"Panel en contraste y cordones planos"],[95,150,"Talón reforzado"],[150,205,"Malla transpirable y suela de gran agarre"],[205,262,"Costuras selladas"],[262,332,"Puntera ventilada y flexible"],[332,361,"Cámara de aire visible"]]},
+    {dir:"t",home:50,caps:[[0,60,"Vista desde arriba"],[60,130,"Cordones planos y lengüeta acolchada"],[130,240,"Talón reforzado y colchón de aire"],[240,300,"Malla transpirable"],[300,361,"Vista desde arriba"]]},
+    {dir:"b",home:0,caps:[[0,170,"Suela con tacos de tracción"],[170,235,"Laterales de la suela"],[235,361,"Cámara de aire visible"]]}
   ];
   const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
   const root=document.documentElement,cv=$("#cv"),ctx=cv.getContext("2d");
   const reduce=matchMedia("(prefers-reduced-motion:reduce)").matches;
   const rot=$("#rot"),deg=$("#deg"),badge=$("#badge"),badgeTxt=$("#badgeTxt"),hint=$("#hint"),loader=$("#loader");
-  let angle=0,vel=0,dragging=false,lastX=0,lastT=0,idleAt=performance.now(),capI=0,cur=0,size=42,target=null;
+  let ring=0,prev=null,fade=0,angle=0,vel=0,dragging=false,lastX=0,lastT=0,idleAt=performance.now(),capI=-1,cur=0,size=42,target=null;
 
-  // ---- carga progresiva de los 72 fotogramas ----
-  const imgs=new Array(N),ready=new Array(N).fill(false);let loaded=0;
-  function load(i){return new Promise(res=>{
-    const im=new Image();im.decoding="async";
-    im.onload=()=>{imgs[i]=im;ready[i]=true;loaded++;loader.textContent="Cargando "+Math.round(loaded/N*100)+"%";if(loaded>=N||i===0&&loaded===1)draw();res()};
-    im.onerror=res;im.src="img/s/"+String(i).padStart(2,"0")+".webp";
+  // ---- carga progresiva de fotogramas por vista ----
+  rings.forEach(r=>{r.imgs=new Array(N);r.ready=new Array(N).fill(false);r.loaded=0;r.started=false});
+  const pad=i=>String(i).padStart(2,"0");
+  function load(r,i){return new Promise(res=>{
+    const R=rings[r],im=new Image();im.decoding="async";
+    im.onload=()=>{R.imgs[i]=im;R.ready[i]=true;R.loaded++;if(r===0)loader.textContent="Cargando "+Math.round(R.loaded/N*100)+"%";res()};
+    im.onerror=res;im.src="img/"+R.dir+"/"+pad(i)+".webp";
   })}
-  (async()=>{
-    await load(0);
+  async function loadRing(r){
+    const R=rings[r];if(R.started)return;R.started=true;
+    await load(r,0);
     const coarse=[];for(let i=6;i<N;i+=6)coarse.push(i);
-    const order=coarse.concat(Array.from({length:N},(_,i)=>i).filter(i=>i&&i%6));
-    const q=order.slice();const workers=Array.from({length:4},async()=>{while(q.length)await load(q.shift())});
-    await Promise.all(workers);loader.classList.add("done");
-  })();
-  setTimeout(()=>{if(loaded>=6)loader.classList.add("done")},2500);
+    const q=coarse.concat(Array.from({length:N},(_,i)=>i).filter(i=>i&&i%6));
+    await Promise.all(Array.from({length:4},async()=>{while(q.length)await load(r,q.shift())}));
+    if(r===0)loader.classList.add("done");
+  }
+  (async()=>{await loadRing(0);loadRing(1).then(()=>loadRing(2))})();
+  setTimeout(()=>{if(rings[0].loaded>=6)loader.classList.add("done")},2500);
 
-  function nearest(i){for(let d=0;d<N;d++){const a=(i+d)%N,b=(i-d+N*2)%N;if(ready[a])return a;if(ready[b])return b}return 0}
+  function nearest(R,i){for(let d=0;d<N;d++){const a=(i+d)%N,b=(i-d+N*2)%N;if(R.ready[a])return R.imgs[a];if(R.ready[b])return R.imgs[b]}return null}
+  function frame(R,ang,alpha){
+    const f=((ang%360)+360)%360/STEP,i0=Math.floor(f)%N,i1=(i0+1)%N,t=f-Math.floor(f);
+    const a=nearest(R,i0),b=nearest(R,i1);if(!a)return false;
+    ctx.globalAlpha=alpha;ctx.drawImage(a,0,0,cv.width,cv.height);
+    if(b&&b!==a&&t>.02){ctx.globalAlpha=alpha*t;ctx.drawImage(b,0,0,cv.width,cv.height)}
+    ctx.globalAlpha=1;return true;
+  }
   function draw(){
-    const f=((angle%360)+360)%360/STEP,i0=Math.floor(f)%N,i1=(i0+1)%N,t=f-Math.floor(f);
-    const a=imgs[nearest(i0)],b=imgs[nearest(i1)];if(!a)return;
-    ctx.globalAlpha=1;ctx.clearRect(0,0,cv.width,cv.height);ctx.drawImage(a,0,0,cv.width,cv.height);
-    if(b&&b!==a&&t>.02){ctx.globalAlpha=t;ctx.drawImage(b,0,0,cv.width,cv.height)}
-    ctx.globalAlpha=1;
+    ctx.clearRect(0,0,cv.width,cv.height);
+    if(prev&&fade>0)frame(rings[prev.ring],prev.angle,1);
+    frame(rings[ring],angle,prev&&fade>0?1-fade:1);
   }
   function ui(){
-    const a=Math.round(((angle%360)+360)%360);rot.value=a%360;deg.textContent=a%360+"°";
-    const idx=caps.findIndex(c=>a>=c[0]&&a<c[1]);
+    const a=Math.round(((angle%360)+360)%360)%360;rot.value=a;deg.textContent=a+"°";
+    const caps=rings[ring].caps,idx=caps.findIndex(c=>a>=c[0]&&a<c[1]);
     if(idx>-1&&idx!==capI){capI=idx;badge.classList.add("swap");setTimeout(()=>{badgeTxt.textContent=caps[idx][2];badge.classList.remove("swap")},170)}
   }
 
+  // ---- cambio de vista con fundido ----
+  function setRing(r,keep){
+    if(r===ring)return;
+    loadRing(r);
+    prev={ring,angle};fade=1;ring=r;
+    angle=keep!==undefined?keep:rings[r].home;vel=0;target=null;capI=-1;idleAt=performance.now();
+    $$("#views button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.r===r));
+    hint.classList.add("gone");
+  }
+  $$("#views button").forEach(b=>b.onclick=()=>setRing(+b.dataset.r));
+  const order=[2,0,1]; // de abajo (suela) a arriba (vista superior)
+  function stepRing(dir){const i=order.indexOf(ring)+dir;if(i>=0&&i<order.length)setRing(order[i])}
+
   // ---- bucle: inercia, autogiro y animación a un ángulo ----
   function tick(now){
+    if(fade>0)fade=Math.max(0,fade-.06);
     if(target!==null){
-      let d=((target-angle+540)%360)-180;angle+=d*.12;if(Math.abs(d)<.4){angle=target;target=null}
+      const d=((target-angle+540)%360)-180;angle+=d*.12;if(Math.abs(d)<.4){angle=target;target=null}
     }else if(!dragging){
       if(Math.abs(vel)>.02){angle+=vel;vel*=.94}
       else if(!reduce&&now-idleAt>2800){angle+=.28}
@@ -279,17 +313,19 @@ footer{padding:46px 18px calc(46px + env(safe-area-inset-bottom));text-align:cen
   }
   requestAnimationFrame(tick);
 
-  // ---- arrastre (ratón y dedo) ----
-  const vw=$("#viewer");
-  vw.addEventListener("pointerdown",e=>{dragging=true;target=null;lastX=e.clientX;lastT=e.timeStamp;vel=0;vw.setPointerCapture(e.pointerId);hint.classList.add("gone")});
+  // ---- arrastre: lados = girar; con ratón, arriba/abajo = cambiar de vista ----
+  const vw=$("#viewer");let sy=0,switched=false;
+  vw.addEventListener("pointerdown",e=>{dragging=true;target=null;lastX=e.clientX;sy=e.clientY;switched=false;lastT=e.timeStamp;vel=0;vw.setPointerCapture(e.pointerId);hint.classList.add("gone")});
   vw.addEventListener("pointermove",e=>{
-    if(!dragging)return;const dx=e.clientX-lastX,dt=Math.max(1,e.timeStamp-lastT);
+    if(!dragging)return;
+    const dx=e.clientX-lastX,dt=Math.max(1,e.timeStamp-lastT);
+    if(e.pointerType==="mouse"&&!switched){const dy=e.clientY-sy;if(Math.abs(dy)>70&&Math.abs(dy)>Math.abs(e.clientX-lastX)*1.2+30){switched=true;stepRing(dy>0?1:-1);return}}
     const k=360/(vw.clientWidth*1.15);angle-=dx*k;vel=-(dx*k)/dt*16*.9;lastX=e.clientX;lastT=e.timeStamp;idleAt=performance.now();
   });
   const end=()=>{dragging=false;idleAt=performance.now()};
   vw.addEventListener("pointerup",end);vw.addEventListener("pointercancel",end);
   rot.addEventListener("input",()=>{target=null;vel=0;angle=+rot.value;idleAt=performance.now();hint.classList.add("gone")});
-  function spinTo(a){target=a;vel=0;idleAt=performance.now()}
+  function spinTo(a){setRing(0,ring===0?angle:0);target=a;vel=0;idleAt=performance.now()}
 
   // ---- color, talla, pedido ----
   const sizes=$("#sizes");
